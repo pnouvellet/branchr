@@ -1,0 +1,121 @@
+---
+title: "Example"
+author: "Pierre Nouvellet "
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+```{r}
+
+rm(list=ls(all.names=TRUE))
+library(Hmisc)
+
+```
+
+# Simulate
+
+## Poisson
+
+
+```{r}
+
+R <- .8  # reproduction number
+s <- 1.    # number of initial case per cluster
+rho <- .8      # reporting
+t_max <- 5e3    # simulate for how many days
+n <- 30 # number if independent importations
+
+Nrep <- 10. # number of replications
+
+```
+
+# simulate Poisson clusters
+
+```{r}
+
+Clusters <- list()
+
+for(i in 1:Nrep){
+  temp <- branchr::simulate_poisson(R = R, n = n, s = s, rho = rho, t_max)
+  Clusters[[i]] <- list(Sizes = temp$true_size, # true list of outbreak sizes
+                        y_obs = temp$observed_size) # size reported
+  
+}
+
+
+```
+
+# inference
+
+```{r}
+Rest <- Imp <-list(theta = rep(NA,Nrep), CIin = rep(NA,Nrep))
+
+for(i in 1:Nrep){
+  profile <- profile_likelihood(y_obs = Clusters[[i]]$y_obs,
+                                rho = rho,
+                                accuracy = 0.01,
+                                max_R = 20)
+  
+  # estimate R
+  R_estimate <- theta_max_likelihood(theta = profile$theta,
+                                     likelihood = profile$Likelihood,
+                                     threshold_CI = 0.95)
+  
+  # estimate number of importations unseen
+  import <- import(y_obs = Clusters[[i]]$y_obs,
+                   rho = rho,
+                   profile = profile,
+                   threshold_z = 1e3,
+                   threshold_import = 1e3,
+                   CI = 0.95)
+  
+  Rest$theta[i] <- R_estimate$theta_max_likelihood
+  Rest$CIin[i] <- ((R_estimate$upper_theta>=R) &
+                     (R_estimate$lower_theta<=R))
+  
+  Imp$theta[i] <- length(Clusters[[i]]$y_obs)+import$theta_max_likelihood
+  Imp$CIin[i] <- (( (length(Clusters[[i]]$y_obs)+import$upper_theta) >= n) &
+                    ( (length(Clusters[[i]]$y_obs)+import$lower_theta)<= n))
+  
+}      
+```
+
+
+## plot
+
+```{r}
+
+layout(matrix(1:4,ncol = 4,nrow = 1))
+
+# plot R's
+y <- Rest
+ymed <- quantile(y$theta,c(.5,.025,.975))
+
+errbar(n,ymed[1], ymed[2],ymed[3],ylim = c(0,1),
+       ylab = 'distribution of R estimates',xlab = 'nb imported cases')
+abline(h = R, lty = 2, col = 'red3')
+
+plot(n,sum(y$CIin)/Nrep,pch=16,
+     ylim = c(0,1),ylab = 'Proportion of 95%CI including true R',
+     xlab = 'nb imported cases')
+abline(h = 0.95, lty = 2, col = 'red3')
+
+#plot importations
+y <- Imp
+ymed <- quantile(y$theta,c(.5,.025,.975))
+
+errbar(n,ymed[1], ymed[2],ymed[3],ylim = c(0,n*1.5),
+       ylab = 'distribution of importation estimates',xlab = 'nb imported cases')
+abline(h = n, lty = 2, col = 'red3')
+
+plot(n,sum(y$CIin)/Nrep,pch=16,
+     ylim = c(0,1),ylab = 'Proportion of 95%CI including true R',
+     xlab = 'nb imported cases')
+abline(h = 0.95, lty = 2, col = 'red3')
+
+
+
+```
