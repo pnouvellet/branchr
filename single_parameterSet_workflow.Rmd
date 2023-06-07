@@ -1,0 +1,82 @@
+---
+title: "Example"
+author: "Pierre Nouvellet "
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+```{r}
+
+rm(list=ls(all.names=TRUE))
+
+```
+
+# Simulate
+
+## Poisson
+
+
+```{r}
+
+R <- .8  # reproduction number
+s <- 1.    # number of initial case per cluster
+rho <- .8      # reporting
+t_max <- 5e3    # simulate for how many days
+n <- 30. # number if independent importations
+
+```
+
+# simulate Poisson clusters
+
+```{r}
+
+Clusters <- branchr::simulate_poisson(R = R, n = n, s = s, rho = rho, t_max)
+
+```
+
+# inference
+
+```{r}
+
+Sizes <- Clusters$true_size # true list of outbreak sizes
+y_obs <- Clusters$observed_size # size reported
+
+
+profile <- profile_likelihood(y_obs = y_obs,
+                                  rho = rho,
+                                  accuracy = 0.01,
+                                  max_R = 20)
+
+# estimate R
+R_estimate <- theta_max_likelihood(theta = profile$theta,
+                                       likelihood = profile$Likelihood,
+                                       threshold_CI = 0.95)
+
+# estimate number of importations unseen
+import <- import(y_obs = y_obs,
+                   rho = rho,
+                   profile = profile,
+                   threshold_z = 1e3,
+                   threshold_import = 1e3,
+                   CI = 0.95)
+
+plot(profile$theta, profile$Likelihood,typ = 'l',
+     bty='n',xlab = 'R',ylab = 'likelhood')
+
+abline(v = R, col = 'red3')
+abline(v = R_estimate$theta_max_likelihood, col = 'blue3')
+abline(v = R_estimate$lower_theta, col = 'blue3',lty = 2)
+abline(v = R_estimate$upper_theta, col = 'blue3',lty = 2)
+
+data.frame(Sim_R = R, 
+           estimateR = paste(R_estimate[-2],collapse = ' , '), 
+           Rincluded = ((R_estimate$upper_theta>=R) &
+                          (R_estimate$lower_theta<=R)),
+           EstimateImport = paste( length(y_obs)+unlist(import[-2]) ,collapse = ' , '),
+           Importincluded = (( (length(y_obs)+import$upper_theta) >= n) &
+                               ( (length(y_obs)+import$lower_theta)<= n)) )
+           
+```
