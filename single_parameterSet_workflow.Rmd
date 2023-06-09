@@ -11,6 +11,7 @@ output:
 ```{r}
 
 rm(list=ls(all.names=TRUE))
+library(branchr)
 
 ```
 
