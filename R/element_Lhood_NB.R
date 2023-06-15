@@ -8,7 +8,8 @@
 #' 2) g0: the probability of not observing an outbreak (i.e. y=0 or no cases) given z and rho.
 #'
 #' g and g0 are obtained using the function proba_observation.
-#'
+#' 
+#' adapted from element_Lhood_poisson but accounting for a NB offspring distribution with overdispersion 'over'
 #'
 #' @author Pierre Nouvellet (\email{p.nouvellet@imperial.ac.uk})
 #'
@@ -16,6 +17,8 @@
 #'
 #' @param R is the reproduction number, i.e. the average number of secondary cases due to a single case.
 #' This can be any positive number.
+#' 
+#' @param over is the overdispersion in the offspring distribution.
 #'
 #' @param z is the true potential outbreak sizes. It is precomputed by proba_observation.
 #'
@@ -27,20 +30,21 @@
 #'
 #'
 #' @return
-#'  The function returns the likelihood of the observations for a given {R,rho}.
+#'  The function returns the likelihood of the observations for a given {R,rho,overdispersion}.
 #'
 #'
 #' @examples
 #'
-#' y <- element_Lhood_poisson(R = .5, z = x$possible_size, g = x$p_y_z, g0 = x$p_0_z)
+#' y <- element_Lhood_NB(R = .5, over = 1, z = x$possible_size, g = x$p_y_z, g0 = x$p_0_z)
 #' y
 #'
 
 
-element_Lhood_poisson<-function(R,z,g,g0){
+element_Lhood_NB<-function(R,over,z,g,g0){
 
-  R_eff <- R_eff_poisson(R = R)
-  f <- f_z_poiss(z = z, s= 1, R = R_eff$R_effective)*R_eff$P_extinction
+  R_eff <- R_eff_NB(R = R, over = over)
+  # f <- f_z_poiss(z,1,R_eff$R_effective)*R_eff$P_extinction
+  f <- f_z_NB(z = z, s = 1, R = R_eff$R_effective, over = over)*R_eff$P_extinction
   # get the likelihood
   Likelihood <- (sum(log((g %*% f)))-nrow(g)*log(1-g0 %*% f))
   # correction for threshold?

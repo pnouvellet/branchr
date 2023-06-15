@@ -3,8 +3,9 @@
 #' For any Rl>1, we can find an Rs<1 guaranteeing that
 #' conditional on extinction, outbreak properties starting from Rs or Rl are exactly the same.
 #' We call this Rs an effective R.
-#' The funtcion compute the effetive R as well as alpha (see alpha_poisson) and the probability of extinction (see proba_ext)
+#' The func`tion compute the effetive R as well as alpha (see alpha_poisson) and the probability of extinction (see proba_ext)
 #'
+#' adapted from R_eff_poisson but accounting for a NB offspring distribution with overdispersion 'over'
 #'
 #' @author Pierre Nouvellet (\email{p.nouvellet@imperial.ac.uk})
 #'
@@ -12,6 +13,9 @@
 #'
 #' @param R is the reproduction number, i.e. the average number of secondary cases due to a single case.
 #' This can be any positive number. if R is a vector, then the length of R must be 'n' (see below).
+#'
+#' @param over is the overdispersion in the offspring distribution.
+#'
 #'
 #' @return
 #'  The function returns a list including:
@@ -28,13 +32,14 @@
 #'
 #' @examples
 #'
-#' x <- R_eff_poisson(R = .5)
+#' x <- R_eff_NB(R = 1.5, over = 1)
 #' x
+#'
 #
-R_eff_poisson <- function(R){
+R_eff_NB <- function(R,over){
 
   if (R>1){
-    alpha <- alpha_poisson(R = R)
+    alpha <- alpha_NB(R = R, over = over)
     p_ext <- proba_ext(alpha = alpha)
     R_eff <- R*p_ext
   }else{

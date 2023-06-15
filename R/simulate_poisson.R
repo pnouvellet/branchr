@@ -48,7 +48,7 @@
 #'
 #' @examples
 #'
-#' x <- simulate_poisson(.9, 5, 1, .5, 1e2)
+#' x <- simulate_poisson(R = .9, n = 5, s = 1, rho = .5, t_max = 1e2)
 #' x
 #'
 simulate_poisson <- function(R,n,s,rho,t_max) {
@@ -60,8 +60,8 @@ simulate_poisson <- function(R,n,s,rho,t_max) {
 	if ((length(t_max)!=1 | t_max==0 | t_max!=round(t_max))[1]) warning('t_max must be a positive integer')
 
 	# declare incidence matrices
-  N <- matrix(NA,n,t_max)
-  N_obs_full <- matrix(NA,n,t_max)
+  N <- matrix(NA, nrow = n, ncol = t_max)
+  N_obs_full <- matrix(NA,nrow = n, ncol = t_max)
 
 	# initial values
   N[,1] <- s

@@ -45,14 +45,14 @@ proba_observation <- function(y,rho,threshold){
 
 
   # Observed outbreak sizes
-  Y <- matrix(y,length(y),threshold,byrow=FALSE)
+  Y <- matrix(y,nrow = length(y), ncol = threshold, byrow = FALSE)
   # Plausible outbreak sizes
-  z <- matrix(seq(1,threshold),threshold,1)
+  z <- matrix(seq(1,threshold), nrow = threshold, ncol = 1)
 
   # likelihood of observing y given z,rho
-  g <- dbinom(Y,matrix(z,nrow(Y),threshold,byrow=TRUE),rho)
+  g <- dbinom(Y,matrix(z, nrow = nrow(Y), ncol = threshold, byrow = TRUE),rho)
   # likelihood of oberving 0 given z, rho
-  g0 <- dbinom(0,matrix(z,1,threshold,byrow=TRUE),rho)
+  g0 <- dbinom(0,matrix(z, nrow = 1, ncol = threshold, byrow = TRUE),rho)
 
   return( list( approx_R = Expected_R, y_obs_reformat = Y,
                 possible_size = z, p_y_z = g, p_0_z = g0) )

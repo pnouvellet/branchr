@@ -1,0 +1,244 @@
+---
+title: "Example"
+author: "Pierre Nouvellet "
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+```{r}
+
+rm(list=ls(all.names=TRUE))
+library(Hmisc)
+library(branchr)
+
+```
+
+# Simulate
+
+## Poisson
+
+
+```{r}
+
+
+s <- 1.    # number of initial case per cluster
+t_max <- 5e3    # simulate for how many days
+overdispersion <-  c(NA, 1)
+n_over <- length(overdispersion)
+
+param.grid <- expand.grid(R = c(.5, 0.8),  # reproduction number
+                          rho = c(0.2,0.8),       # reporting
+                          n = c(50, 100), # number if independent importations
+                          k = overdispersion ) # overdisperrsion
+
+
+
+Nrep <- 10 # number of replications
+n_param_set <- nrow(param.grid)
+
+param.grid$R_med = NA
+param.grid$R_low = NA
+param.grid$R_high = NA
+param.grid$R_cover = NA
+
+param.grid$Imp_med = NA
+param.grid$Imp_low = NA
+param.grid$Imp_high = NA
+param.grid$Imp_cover = NA
+
+```
+
+# simulate Poisson clusters
+
+```{r}
+
+Clusters <- list()
+for(k in 1:n_param_set){
+  print(k)
+  Clusters[[paste0('Rkrhon = ',paste(param.grid[k,1:4],collapse = ' ; '))]] = list()
+  for(i in 1:Nrep){
+    if(is.na(param.grid$k[k])){
+      temp <- simulate_poisson(R = param.grid$R[k],
+                               n = param.grid$n[k], 
+                               s = s, 
+                               rho = param.grid$rho[k], 
+                               t_max = t_max)
+    }else if(param.grid$k[k] > 0){
+      temp <- simulate_negbin(R = param.grid$R[k],
+                              n = param.grid$n[k], 
+                              s = s, 
+                              rho = param.grid$rho[k], 
+                              t_max = t_max,  
+                              over = param.grid$k[k])
+    }
+    
+    Clusters[[k]][[i]] <- list(Sizes = temp$true_size, # true list of outbreak sizes
+                               y_obs = temp$observed_size) # size reported
+    
+  }
+}
+
+
+```
+
+# inference
+
+```{r}
+
+for(k in 1:n_param_set){
+  print(k)
+  Rest <- Imp <-list(theta = rep(NA,Nrep), CIin = rep(NA,Nrep))
+  
+  if (is.na(param.grid$k[k])){
+    overd <- NULL
+  }else if(param.grid$k[k]>0){
+    overd <- param.grid$k[k]
+  }
+  for(i in 1:Nrep){
+    
+    profile <- profile_likelihood(y_obs = Clusters[[k]][[i]]$y_obs,
+                                  rho = param.grid$rho[k],
+                                  accuracy = 0.01,
+                                  max_R = 20,
+                                  over = overd)
+    
+    # estimate R
+    R_estimate <- theta_max_likelihood(theta = profile$theta,
+                                       likelihood = profile$Likelihood)
+    
+    # estimate number of importations unseen
+    imp_est <- import(y_obs = Clusters[[k]][[i]]$y_obs,
+                     rho = param.grid$rho[k],
+                     profile = profile,
+                     threshold_z = 1e3,
+                     threshold_import = 1e3)
+    
+    Rest$theta[i] <- R_estimate$theta_max_likelihood
+    Rest$CIin[i] <- ((R_estimate$upper_theta >= param.grid$R[k]) &
+                       (R_estimate$lower_theta <= param.grid$R[k]))
+    
+    Imp$theta[i] <- length(Clusters[[k]][[i]]$y_obs)+imp_est$theta_max_likelihood
+    Imp$CIin[i] <- (( (length(Clusters[[k]][[i]]$y_obs)+imp_est$upper_theta) >= param.grid$n[k]) &
+                      ( (length(Clusters[[k]][[i]]$y_obs)+imp_est$lower_theta) <= param.grid$n[k]))
+    
+  }
+  y <- Rest
+  param.grid[k,5:8] <- c( quantile(y$theta,c(.5,.025,.975)) , sum(y$CIin)/Nrep)
+  
+  y <- Imp
+  param.grid[k,9:12] <- c( quantile(y$theta,c(.5,.025,.975)) , sum(y$CIin)/Nrep)
+  
+}
+
+
+
+```
+
+
+## plot
+
+```{r}
+
+par(oma=c(3,3,0,0))
+# plot R's
+Hmisc::errbar(x = rep(1:(n_param_set/n_over), n_over)+
+                rep(seq(-0.1,0.1, length.out = n_over), each = n_param_set/n_over),
+              y = param.grid$R_med, 
+              yminus = param.grid$R_low, 
+              yplus = param.grid$R_high,
+              bty = 'n',ylim = c(0,1),
+              ylab = 'distribution of R estimates',
+              xaxt = "n", xlab = "",
+              col = rep(c('blue3','green4'), each = n_param_set/n_over),
+              errbar.col = rep(c('blue3','green4'), each = n_param_set/n_over))
+
+axis(1, at = 1:(n_param_set/n_over), 
+     labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
+                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+     las=2, cex.axis = 0.8)
+
+lines(1:(n_param_set/n_over), param.grid$R[1:(n_param_set/n_over)],
+      pch = 16, type = 'p', col = 'red3')
+
+legend('bottomright',
+       legend = c('Simulated values','Estimates (Poiss)','Estimates (NB)'),
+       col = c('red3','blue3','green4'), bty = 'n',pch = 16)
+
+# coverage
+temp <- Hmisc::binconf(x = param.grid$R_cover*Nrep, n = Nrep, method = 'exact')
+Hmisc::errbar(rep(1:(n_param_set/n_over), n_over)+
+                rep(seq(-0.1,0.1, length.out = n_over), each = n_param_set/n_over), 
+              y = temp[,1],
+              yminus = temp[,2], 
+              yplus = temp[,3],
+              bty = 'n',ylim = c(0,1),
+              ylab = 'Proportion of 95%CI including true R',
+              xaxt = "n", xlab = "",
+              col = rep(c('blue3','green4'), each = n_param_set/n_over),
+              errbar.col = rep(c('blue3','green4'), each = n_param_set/n_over))
+
+axis(1, at = 1:(n_param_set/2), 
+     labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
+                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+     las=2, cex.axis = 0.8)
+abline(h = 0.95, lty = 2, col = 'red3')
+
+legend('bottomright',
+       legend = c('Estimates (Poiss)','Estimates (NB)'),
+       col = c('blue3','green4'), bty = 'n',pch = 16)
+
+```
+
+```{r}
+
+#plot importations
+Hmisc::errbar(x = rep(1:(n_param_set/n_over), n_over)+
+                rep(seq(-0.1,0.1, length.out = n_over), each = n_param_set/n_over),
+              y = param.grid$Imp_med, 
+              yminus = param.grid$Imp_low, yplus = param.grid$Imp_high,
+              bty = 'n',ylim = c(0,max(param.grid$n*1.2)),
+              ylab = 'distribution of importation estimates',
+              xaxt = "n", xlab = "",
+              col = rep(c('blue3','green4'), each = n_param_set/n_over),
+              errbar.col = rep(c('blue3','green4'), each = n_param_set/n_over))
+
+axis(1, at = 1:(n_param_set/2),
+     labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
+                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+     las=2, cex.axis = 0.8)
+lines(1:(n_param_set/2), param.grid$n[1:(n_param_set/2)],
+      pch = 16, type = 'p', col = 'red3')
+
+legend('bottomright',
+       legend = c('Simulated values','Estimates (Poiss)','Estimates (NB)'),
+       col = c('red3','blue3','green4'), bty = 'n',pch = 16)
+
+# coverage
+temp <- Hmisc::binconf(x = param.grid$Imp_cover*Nrep, n = Nrep, method = 'exact')
+Hmisc::errbar(rep(1:(n_param_set/n_over), n_over)+
+                rep(seq(-0.1,0.1, length.out = n_over), each = n_param_set/n_over), 
+              y = temp[,1],
+              yminus = temp[,2], 
+              yplus = temp[,3],
+              bty = 'n',ylim = c(0,1),
+              ylab = 'Proportion of 95%CI including true importations',
+              xaxt = "n", xlab = "",
+              col = rep(c('blue3','green4'), each = n_param_set/n_over),
+              errbar.col = rep(c('blue3','green4'), each = n_param_set/n_over))
+
+axis(1, at = 1:(n_param_set/2), 
+     labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
+                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+     las=2, cex.axis = 0.8)
+abline(h = 0.95, lty = 2, col = 'red3')
+
+legend('bottomright',
+       legend = c('Estimates (Poiss)','Estimates (NB)'),
+       col = c('blue3','green4'), bty = 'n',pch = 16)
+
+
+
+```

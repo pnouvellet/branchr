@@ -24,7 +24,7 @@ library(branchr)
 ```{r}
 
 
-s <- 1.    # number of initial case per cluster
+s <- 1    # number of initial case per cluster
 t_max <- 5e3    # simulate for how many days
 
 param.grid <- expand.grid(R = c(.5, 0.8),  # reproduction number
