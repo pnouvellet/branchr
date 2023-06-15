@@ -85,7 +85,13 @@ for(k in 1:n_param_set){
 saveRDS(list(Clusters = Clusters, param.grid = param.grid), file = 'sim_grid.rds')
 
 ```
+```{r}
 
+a <- readRDS(file = 'sim_grid.rds')
+Clusters <- a$Clusters
+a$param.grid
+
+```
 
 # inference
 

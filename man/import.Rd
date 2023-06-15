@@ -34,7 +34,7 @@ cases (reported and un-reported cases) and rho the reporting probability. It is 
 }
 \value{
 The function returns the maximum likelihood of the total number of clusters
- (observed and unobserved), associated confidence intervals and maximum likelihood
+ (observed and unobserved), associated confidence intervals and maximum likelohood
 }
 \description{
 # Estimate the number of clusters, including those unobserved
