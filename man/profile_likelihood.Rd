@@ -4,15 +4,14 @@
 \alias{profile_likelihood}
 \title{Profile likelihood for R given observations, rho, threshold, accuracy maximum value for R}
 \usage{
-profile_likelihood(y_obs, rho, threshold, accuracy, max_R)
+profile_likelihood(y_obs, rho, accuracy, max_R, over = NULL)
 }
 \arguments{
+\item{over}{is the overdispersion in the offspring distribution.}
+
 \item{y_obs:}{a vector of outbreak sizes observations.}
 
 \item{rho:}{the probability of a single case being detected.}
-
-\item{threshold:}{the maximum true final size of an outbreak. this need to be much higher
-than the largest observed outbreak to account for reporting and properly evaluate the distribution of outbreak sizes}
 
 \item{accuracy:}{R will take potential values in a grid spaning from accuracy up to max_R with increments 'accuracy'}
 

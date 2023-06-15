@@ -18,13 +18,13 @@
 #' @param threshold_import: maximum number of importations evaluated.
 #'
 #' @param CI optional parameter for the level of the confidence interval.Default
-#' is 0.95 for 95% confidence interval
+#' is 0.95 for 95percent confidence interval
 #'
 #' @param over is the overdispersion in the offspring distribution.
 #'
 #' @return
 #'  The function returns the maximum likelihood of the total number of clusters
-#'  (observed and unobserved), associated confidence intervals and maximum likelohood
+#'  (observed and unobserved), associated confidence intervals and maximum likelihood
 #'
 #'
 #'

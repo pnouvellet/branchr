@@ -2,27 +2,30 @@
 % Please edit documentation in R/theta_max_likelihood.R
 \name{theta_max_likelihood}
 \alias{theta_max_likelihood}
-\title{Obatin the maximium likleihood from a vector of parameter and its likelihood profile}
+\title{Obtain the maximum likelihood from a vector of parameter and its likelihood profile}
 \usage{
-theta_max_likelihood(theta, likelihood, threshold_CI)
+theta_max_likelihood(theta, likelihood, CI = 0.95)
 }
 \arguments{
-\item{theta}{is a vector containing parameter's values for which the likelihood has been evaluated}
+\item{theta}{is a vector containing parameter's values for which the
+likelihood has been evaluated}
 
-\item{likelihood}{at the paraneter's value (log-likelihood)}
+\item{likelihood}{at the parameter's value (log-likelihood)}
 
-\item{threshold_CI}{is the threshold to estimate the confidence interval, i.e. to obtain
-a 95% confidence interval threshold_CI=95.}
+\item{CI}{is the level to estimate the confidence interval, i.e. the default,
+CI = 0.95, return the 95percent confidence interval.}
 }
 \value{
 The function returns a list including:
 \itemize{
 
-\item theta_max_likelihood: the maximum likelihood estimated with the rabge of theta values evaluated.
+\item theta_max_likelihood: the maximum likelihood estimated with the range
+of theta values evaluated.
 
 \item max_likelihood: the log of the maximum likelihood.
 
-\item lower_theta,upper_theta: lower and upper bound of the 'threshold_CI'% confidence interval.
+\item lower_theta,upper_theta: lower and upper bound of the 'CI'percent
+confidence interval.
 
 
 }

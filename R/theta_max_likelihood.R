@@ -13,19 +13,19 @@
 #' @param likelihood at the parameter's value (log-likelihood)
 #'
 #' @param CI is the level to estimate the confidence interval, i.e. the default,
-#' CI = 0.95, return the 95% confidence interval.
+#' CI = 0.95, return the 95percent confidence interval.
 #'
 #'
 #' @return
 #'  The function returns a list including:
 #' \itemize{
 #'
-#' \item theta_max_likelihood: the maximum likelihood estimated with the rabge
+#' \item theta_max_likelihood: the maximum likelihood estimated with the range
 #' of theta values evaluated.
 #'
 #' \item max_likelihood: the log of the maximum likelihood.
 #'
-#' \item lower_theta,upper_theta: lower and upper bound of the 'CI'%
+#' \item lower_theta,upper_theta: lower and upper bound of the 'CI'percent
 #' confidence interval.
 #'
 #'

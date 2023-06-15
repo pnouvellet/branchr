@@ -2,38 +2,49 @@
 % Please edit documentation in R/import.R
 \name{import}
 \alias{import}
-\title{# Likelihood of observing outbreaks of size y given parameters}
+\title{# Estimate the number of clusters, including those unobserved}
 \usage{
-import(y_obs, profile, threshold_z, threshold_import, CI)
+import(
+  y_obs,
+  rho,
+  profile,
+  threshold_z,
+  threshold_import,
+  CI = 0.95,
+  over = NULL
+)
 }
 \arguments{
-\item{R}{is the reproduction number, i.e. the average number of secondary cases due to a single case.
+\item{y_obs}{is the reproduction number, i.e. the average number of secondary cases due to a single case.
 This can be any positive number.}
 
-\item{z}{is the true potential outbreak sizes. It is precomputed by proba_observation.}
+\item{rho}{is the true potential outbreak sizes. It is precomputed by proba_observation.}
 
-\item{g:}{the probability of observing size y given z,rho; with z the true number of
+\item{CI}{optional parameter for the level of the confidence interval.Default
+is 0.95 for 95percent confidence interval}
+
+\item{over}{is the overdispersion in the offspring distribution.}
+
+\item{profile:}{the probability of observing size y given z,rho; with z the true number of
 cases (reported and un-reported cases) and rho the reporting probability. It is precomputed by proba_observation.}
 
-\item{g0:}{the probability of not observing an outbreak (i.e. y=0 or no cases) given z and rho.
-It is precomputed by proba_observation.}
+\item{threshold_z:}{maximum size of unobserved cluster.}
+
+\item{threshold_import:}{maximum number of importations evaluated.}
 }
 \value{
-The function returns the likelihood of the observations for a given {R,rho}.
+The function returns the maximum likelihood of the total number of clusters
+ (observed and unobserved), associated confidence intervals and maximum likelihood
 }
 \description{
-The function internally relies on pre-computing:
- 1) g: the probability of observing size y given z,rho; with z the true number of
- cases (reported and un-reported cases) and rho the reporting probability
-}
-\details{
-2) g0: the probability of not observing an outbreak (i.e. y=0 or no cases) given z and rho.
-
-g and g0 are obtained using the function proba_observation.
+# Estimate the number of clusters, including those unobserved
 }
 \examples{
 
-x <- element_Lhood_poisson(.5,x$possible_size,x$p_y_z,x$p_0_z)
+x <- import(y_obs = y_obs_test, rho = .5,
+                profile = prof_test,
+                threshold_z = 1e3,
+                threshold_import = 1e3)
 x
 
 }

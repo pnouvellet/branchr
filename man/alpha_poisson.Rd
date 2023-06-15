@@ -21,7 +21,7 @@ conditional on extinction, outbreak properties starting from Rs or Rl are exactl
 }
 \examples{
 
-x <- alpha_poisson(c(1.5,.5))
+x <- alpha_poisson(R = c(1.5,.5))
 x
 
 }

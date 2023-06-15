@@ -14,23 +14,16 @@ This can be any positive number.}
 The function returns a list including:
 \itemize{
 
-\item R_eff: the effective reproduction number. Note that if R<1, then R_eff=R.
-
-\item alpha given the reproduction number and assuming a Poisson offspring distribution. Note that if R<1, then alpha=0.
-
-\item proba_ext: the probability of extinction given alpha. Note that if R<1, then proba_ext=1.
-
-}
-#'
+ \item the probability of observing an outbreak of size z given R.
+ 
+ }
 }
 \description{
 Compute the probability of observing an outbreak of size z given an R<1 and assuming a Poisson offspring distribution
 }
 \examples{
 
-x <- R_eff_poisson(.5)
-x
-x <- R_eff_poisson(1.5)
+x <- f_z_poiss(z = 1:1e2, s = 1, R = .5)
 x
 
 }
