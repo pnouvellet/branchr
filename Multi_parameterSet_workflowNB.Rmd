@@ -26,17 +26,17 @@ library(branchr)
 
 s <- 1.    # number of initial case per cluster
 t_max <- 5e3    # simulate for how many days
-overdispersion <-  c(NA, 1)
+overdispersion <-  c(NA, 1, 0.1)
 n_over <- length(overdispersion)
 
-param.grid <- expand.grid(R = c(.5, 0.8),  # reproduction number
+param.grid <- expand.grid(R = c(.5, 0.8, 0.9),  # reproduction number
                           rho = c(0.2,0.8),       # reporting
-                          n = c(50, 100), # number if independent importations
+                          n = c(50, 100, 500), # number if independent importations
                           k = overdispersion ) # overdisperrsion
 
 
 
-Nrep <- 10 # number of replications
+Nrep <- 100 # number of replications
 n_param_set <- nrow(param.grid)
 
 param.grid$R_med = NA
@@ -48,6 +48,7 @@ param.grid$Imp_med = NA
 param.grid$Imp_low = NA
 param.grid$Imp_high = NA
 param.grid$Imp_cover = NA
+
 
 ```
 
@@ -81,8 +82,10 @@ for(k in 1:n_param_set){
   }
 }
 
+saveRDS(list(Clusters = Clusters, param.grid = param.grid), file = 'sim_grid.rds')
 
 ```
+
 
 # inference
 
@@ -114,7 +117,8 @@ for(k in 1:n_param_set){
                      rho = param.grid$rho[k],
                      profile = profile,
                      threshold_z = 1e3,
-                     threshold_import = 1e3)
+                     threshold_import = 1e3,
+                     over = overd)
     
     Rest$theta[i] <- R_estimate$theta_max_likelihood
     Rest$CIin[i] <- ((R_estimate$upper_theta >= param.grid$R[k]) &
@@ -133,6 +137,9 @@ for(k in 1:n_param_set){
   
 }
 
+saveRDS(list(Rest = Rest, Imp = Imp,
+             Clusters = Clusters, param.grid = param.grid), 
+        file = 'results_sim_grid.rds')
 
 
 ```

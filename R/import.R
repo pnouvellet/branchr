@@ -18,13 +18,13 @@
 #' @param threshold_import: maximum number of importations evaluated.
 #'
 #' @param CI optional parameter for the level of the confidence interval.Default
-#' is 0.95 for 95percent confidence interval
+#' is 0.95 for 95% confidence interval
 #'
 #' @param over is the overdispersion in the offspring distribution.
 #'
 #' @return
 #'  The function returns the maximum likelihood of the total number of clusters
-#'  (observed and unobserved), associated confidence intervals and maximum likelihood
+#'  (observed and unobserved), associated confidence intervals and maximum likelohood
 #'
 #'
 #'
@@ -36,7 +36,7 @@
 #'                 threshold_import = 1e3)
 #' x
 #'
-import <- function(y_obs,rho,profile,threshold_z,threshold_import, CI = .95, over = NULL){
+import <- function(y_obs,rho,profile,threshold_z,threshold_import, CI = .95, k = NULL){
 
   z <- matrix(seq(1,threshold_z), nrow = threshold_z, ncol = 1)
   g0 <- dbinom(0,matrix(z,nrow = 1,ncol = threshold_z,byrow=TRUE),rho)
@@ -44,31 +44,38 @@ import <- function(y_obs,rho,profile,threshold_z,threshold_import, CI = .95, ove
   profile$import <- 0:threshold_import
   profile$Lk_import <- rep(0,threshold_import+1)
 
-
-  if (is.null(over)){
+  A <- matrix(NA,nrow = threshold_import+1, ncol = length(profile$theta))
+  if (is.null(k)){
     for (i in 1:length(profile$theta)){
       R_eff <- R_eff_poisson(R = profile$theta[i])
       f <- f_z_poiss(z = z, s = 1, R = R_eff$R_effective)*R_eff$P_extinction
       p_obs<- (1-g0 %*% f)
 
 
-      temp <- dnbinom(profile$import, length(y_obs), p_obs, log = TRUE) +
+      A[,i] <- dnbinom(profile$import, length(y_obs), p_obs, log = TRUE) +
         profile$Likelihood[i]
-      profile$Lk_import <- profile$Lk_import + exp(temp)
+
+      # temp <- dnbinom(profile$import, length(y_obs), p_obs, log = TRUE) +
+      #   profile$Likelihood[i]
+      # profile$Lk_import <- profile$Lk_import + exp(temp)
     }
-  } else if (over>0){
+  } else if (k>0){
     for (i in 1:length(profile$theta)){
-      R_eff <- R_eff_NB(R = profile$theta[i], over = over)
-      f <- f_z_NB(z = z,s = 1, R = R_eff$R_effective, over = over)*R_eff$P_extinction
+      R_eff <- R_eff_NB(R = profile$theta[i], k = k)
+      f <- f_z_NB(z = z,s = 1, R = R_eff$R_effective, k = k)*R_eff$P_extinction
       p_obs<- (1-g0 %*% f)
 
 
-      temp <- dnbinom(profile$import, length(y_obs), p_obs, log = TRUE) +
+      A[,i] <- dnbinom(profile$import, length(y_obs), p_obs, log = TRUE) +
         profile$Likelihood[i]
-      profile$Lk_import <- profile$Lk_import + exp(temp)
+
+      # temp <- dnbinom(profile$import, length(y_obs), p_obs, log = TRUE) +
+      #   profile$Likelihood[i]
+      # profile$Lk_import <- profile$Lk_import + exp(temp)
     }
   }
-  profile$Lk_import <- log(profile$Lk_import)
+  b <- max(c(A))
+  profile$Lk_import <- b + log(rowSums( exp(A - b) ) )
 
   max_likelihood <- theta_max_likelihood(profile$import,profile$Lk_import,CI)
 
