@@ -19,6 +19,9 @@ The function returns a list including:
 \item the probability of observing an outbreak of size z given R/overdispersion
 
 }
+
+
+see https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3821076/
 }
 \description{
 adapted from f_z_poisson but accounting for a NB offspring distribution with overdispersion 'over'

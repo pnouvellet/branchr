@@ -31,7 +31,8 @@
 profile_likelihood<-function(y_obs,rho,accuracy,max_R, over = NULL){
 
   #define threshold for calculation, 99.9% that inclde all true size
-  threshold <- max(y_obs)+qnbinom(0.999, max(y_obs),rho,lower.tail=TRUE)+1
+  threshold <- max(c(max(y_obs)+qnbinom(0.999, max(y_obs),rho,lower.tail=TRUE)+1),
+                   1e3)
   # check
   # pbinom(max(y_obs),threshold+max(y_obs),rho) # rounding error??
 
@@ -50,7 +51,7 @@ profile_likelihood<-function(y_obs,rho,accuracy,max_R, over = NULL){
                                         g = interim_res$p_y_z, g0 = interim_res$p_0_z)
     }
   }
-  
+
   return( list( theta = R_grid, Likelihood = Likelihood) )
 
 }
