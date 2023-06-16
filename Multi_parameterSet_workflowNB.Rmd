@@ -85,7 +85,7 @@ for(k in 1:n_param_set){
 saveRDS(list(Clusters = Clusters, param.grid = param.grid), file = 'sim_grid.rds')
 
 ```
-```{r}
+```{r, eval=FALSE}
 
 a <- readRDS(file = 'sim_grid.rds')
 Clusters <- a$Clusters
@@ -97,6 +97,7 @@ a$param.grid
 
 ```{r}
 
+Full <- list()
 for(k in 1:n_param_set){
   print(k)
   Rest <- Imp <-list(theta = rep(NA,Nrep), CIin = rep(NA,Nrep))
@@ -111,7 +112,7 @@ for(k in 1:n_param_set){
     profile <- profile_likelihood(y_obs = Clusters[[k]][[i]]$y_obs,
                                   rho = param.grid$rho[k],
                                   accuracy = 0.01,
-                                  max_R = 20,
+                                  max_R = 2,
                                   over = overd)
     
     # estimate R
@@ -135,6 +136,7 @@ for(k in 1:n_param_set){
                       ( (length(Clusters[[k]][[i]]$y_obs)+imp_est$lower_theta) <= param.grid$n[k]))
     
   }
+  Full[[k]] <- list(Rest = Rest, Imp = Imp)
   y <- Rest
   param.grid[k,5:8] <- c( quantile(y$theta,c(.5,.025,.975)) , sum(y$CIin)/Nrep)
   
@@ -143,13 +145,15 @@ for(k in 1:n_param_set){
   
 }
 
-saveRDS(list(Rest = Rest, Imp = Imp,
+saveRDS(list(Rest = Rest, Imp = Imp, Full = Full,
              Clusters = Clusters, param.grid = param.grid), 
         file = 'results_sim_grid.rds')
 
 
 ```
+```{r, eval=FALSE}
 
+```
 
 ## plot
 
@@ -165,8 +169,8 @@ Hmisc::errbar(x = rep(1:(n_param_set/n_over), n_over)+
               bty = 'n',ylim = c(0,1),
               ylab = 'distribution of R estimates',
               xaxt = "n", xlab = "",
-              col = rep(c('blue3','green4'), each = n_param_set/n_over),
-              errbar.col = rep(c('blue3','green4'), each = n_param_set/n_over))
+              col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
+              errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
 
 axis(1, at = 1:(n_param_set/n_over), 
      labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
@@ -177,8 +181,8 @@ lines(1:(n_param_set/n_over), param.grid$R[1:(n_param_set/n_over)],
       pch = 16, type = 'p', col = 'red3')
 
 legend('bottomright',
-       legend = c('Simulated values','Estimates (Poiss)','Estimates (NB)'),
-       col = c('red3','blue3','green4'), bty = 'n',pch = 16)
+       legend = c('Simulated values','Poisson','NB (over = 1))','NB (over = 0.1)'),
+       col = c('red3','blue3','green4','orange3'), bty = 'n',pch = 16)
 
 # coverage
 temp <- Hmisc::binconf(x = param.grid$R_cover*Nrep, n = Nrep, method = 'exact')
@@ -190,19 +194,53 @@ Hmisc::errbar(rep(1:(n_param_set/n_over), n_over)+
               bty = 'n',ylim = c(0,1),
               ylab = 'Proportion of 95%CI including true R',
               xaxt = "n", xlab = "",
-              col = rep(c('blue3','green4'), each = n_param_set/n_over),
-              errbar.col = rep(c('blue3','green4'), each = n_param_set/n_over))
+              col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
+              errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
 
-axis(1, at = 1:(n_param_set/2), 
+axis(1, at = 1:(n_param_set/n_over), 
      labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
                      '; n=',param.grid$n)[1:(n_param_set/n_over)], 
      las=2, cex.axis = 0.8)
 abline(h = 0.95, lty = 2, col = 'red3')
 
 legend('bottomright',
-       legend = c('Estimates (Poiss)','Estimates (NB)'),
-       col = c('blue3','green4'), bty = 'n',pch = 16)
+       legend = c('Poisson','NB (over = 1))','NB (over = 0.1)'),
+       col = c('blue3','green4','orange3'), bty = 'n',pch = 16)
 
+
+# bias
+fct1 <- function(x,i){
+  a <- quantile(x$Rest$theta - param.grid$R[i],c(0.5,.025,0.975)) / param.grid$R[i]
+  b <- quantile(x$Imp$theta - param.grid$n[i],c(0.5,.025,0.975)) / param.grid$n[i]
+  return(c(a,b))
+}
+param.grid$Rbias <- param.grid$RbiasLow <- param.grid$RbiasHigh <- NA
+param.grid$Impbias <- param.grid$ImpbiasLow <- param.grid$ImpbiasHigh <- NA
+for(i in 1:n_param_set){
+  param.grid[i,c('Rbias','RbiasLow','RbiasHigh',
+                 'Impbias','ImpbiasLow','ImpbiasHigh')] <- fct1(x = Full[[i]], i = i)
+}
+
+Hmisc::errbar(rep(1:(n_param_set/n_over), n_over)+
+                rep(seq(-0.1,0.1, length.out = n_over), each = n_param_set/n_over), 
+              y = param.grid$Rbias,
+              yminus = param.grid$RbiasLow, 
+              yplus = param.grid$RbiasHigh,
+              bty = 'n',ylim = c(-1,1),
+              ylab = 'Bias in R',
+              xaxt = "n", xlab = "",
+              col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
+              errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
+
+axis(1, at = 1:(n_param_set/n_over), 
+     labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
+                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+     las=2, cex.axis = 0.8)
+abline(h = 0, lty = 2, col = 'red3')
+
+legend('bottomright',
+       legend = c('Poisson','NB (over = 1))','NB (over = 0.1)'),
+       col = c('blue3','green4','orange3'), bty = 'n',pch = 16)
 ```
 
 ```{r}
@@ -215,10 +253,10 @@ Hmisc::errbar(x = rep(1:(n_param_set/n_over), n_over)+
               bty = 'n',ylim = c(0,max(param.grid$n*1.2)),
               ylab = 'distribution of importation estimates',
               xaxt = "n", xlab = "",
-              col = rep(c('blue3','green4'), each = n_param_set/n_over),
-              errbar.col = rep(c('blue3','green4'), each = n_param_set/n_over))
+              col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
+              errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
 
-axis(1, at = 1:(n_param_set/2),
+axis(1, at = 1:(n_param_set/n_over),
      labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
                      '; n=',param.grid$n)[1:(n_param_set/n_over)], 
      las=2, cex.axis = 0.8)
@@ -226,8 +264,8 @@ lines(1:(n_param_set/2), param.grid$n[1:(n_param_set/2)],
       pch = 16, type = 'p', col = 'red3')
 
 legend('bottomright',
-       legend = c('Simulated values','Estimates (Poiss)','Estimates (NB)'),
-       col = c('red3','blue3','green4'), bty = 'n',pch = 16)
+       legend = c('Simulated values','Poisson','NB (over = 1))','NB (over = 0.1)'),
+       col = c('red3','blue3','green4','orange3'), bty = 'n',pch = 16)
 
 # coverage
 temp <- Hmisc::binconf(x = param.grid$Imp_cover*Nrep, n = Nrep, method = 'exact')
@@ -239,19 +277,39 @@ Hmisc::errbar(rep(1:(n_param_set/n_over), n_over)+
               bty = 'n',ylim = c(0,1),
               ylab = 'Proportion of 95%CI including true importations',
               xaxt = "n", xlab = "",
-              col = rep(c('blue3','green4'), each = n_param_set/n_over),
-              errbar.col = rep(c('blue3','green4'), each = n_param_set/n_over))
+              col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
+              errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
 
-axis(1, at = 1:(n_param_set/2), 
+axis(1, at = 1:(n_param_set/n_over), 
      labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
                      '; n=',param.grid$n)[1:(n_param_set/n_over)], 
      las=2, cex.axis = 0.8)
 abline(h = 0.95, lty = 2, col = 'red3')
 
 legend('bottomright',
-       legend = c('Estimates (Poiss)','Estimates (NB)'),
-       col = c('blue3','green4'), bty = 'n',pch = 16)
+       legend = c('Poisson','NB (over = 1))','NB (over = 0.1)'),
+       col = c('blue3','green4','orange3'), bty = 'n',pch = 16)
 
 
+# bias
+Hmisc::errbar(rep(1:(n_param_set/n_over), n_over)+
+                rep(seq(-0.1,0.1, length.out = n_over), each = n_param_set/n_over), 
+              y = param.grid$Impbias,
+              yminus = param.grid$ImpbiasLow, 
+              yplus = param.grid$ImpbiasHigh,
+              bty = 'n',ylim = c(-1,1),
+              ylab = 'Bias in R',
+              xaxt = "n", xlab = "",
+              col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
+              errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
 
+axis(1, at = 1:(n_param_set/n_over), 
+     labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
+                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+     las=2, cex.axis = 0.8)
+abline(h = 0, lty = 2, col = 'red3')
+
+legend('bottomright',
+       legend = c('Poisson','NB (over = 1))','NB (over = 0.1)'),
+       col = c('blue3','green4','orange3'), bty = 'n',pch = 16)
 ```
