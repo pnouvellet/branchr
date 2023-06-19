@@ -77,6 +77,7 @@ for(k in 1:n_param_set){
     }
     
     Clusters[[k]][[i]] <- list(Sizes = temp$true_size, # true list of outbreak sizes
+                               Sizes = temp$reported_size, # observed list of outbreak sizes
                                y_obs = temp$observed_size) # size reported
     
   }
@@ -85,6 +86,7 @@ for(k in 1:n_param_set){
 saveRDS(list(Clusters = Clusters, param.grid = param.grid), file = 'sim_grid.rds')
 
 ```
+
 ```{r, eval=FALSE}
 
 a <- readRDS(file = 'sim_grid.rds')
@@ -151,7 +153,18 @@ saveRDS(list(Rest = Rest, Imp = Imp, Full = Full,
 
 
 ```
+
+
 ```{r, eval=FALSE}
+
+aa <- readRDS('results_sim_grid.rds')
+
+Rest = aa$Rest
+Imp = aa$Imp
+Full = aa$Full
+
+Clusters = aa$Clusters
+param.grid = aa$param.grid
 
 ```
 
@@ -316,6 +329,7 @@ legend('bottomright',
 
 
 ```{r}
+
 k=54
 i=1
 
@@ -327,9 +341,10 @@ over = param.grid$k[k]
 n <- param.grid$n[k]
 R <- param.grid$R[k]
 
-a <- simulate_negbin(R, n = 1e5, s = 1, rho = rho, t_max = 1e3, over = over)
+a <- simulate_negbin(R, n = 1e4, s = 1, rho = rho, t_max = 1e3, over = over)
 y_obs <- a$observed_size
 y_true <- a$true_size
+y_trueobs <- a$reported_size
 
 ```
 
@@ -356,5 +371,99 @@ plot(log10(h1$breaks[-1]),(h1$density), ylim = c(0,1))
 lines(log10(h1$breaks[-1]),(f1),col = 'black')
 lines(log10(h1$breaks[-1]),(f2),col = 'red')
 
+```
+
+```{r}
+
+threshold <- max(c(max(y_obs)+qnbinom(0.999, max(y_obs),rho,lower.tail=TRUE)+1),
+                   1e3)
+
+Y <- matrix(y_true,nrow = length(y_true), ncol = threshold, byrow = FALSE)
+# Plausible outbreak sizes
+z <- matrix(seq(1,threshold), nrow = threshold, ncol = 1)
+
+# likelihood of observing y given z,rho
+g <- dbinom(Y,matrix(z, nrow = nrow(Y), ncol = threshold, byrow = TRUE),prob = 1)
+# likelihood of oberving 0 given z, rho
+g0 <- dbinom(0,matrix(z, nrow = 1, ncol = threshold, byrow = TRUE),prob = 1)
+
+Rs <- seq(0.6,0.95,by=.01)
+L0 <- rep(NA,length(Rs))
+for(i in 1:length(Rs)){
+  f <- f_z_NB(z = z, s = 1, R = Rs[i], over = over) #*R_eff$P_extinction #all R_eff are 
+  L0[i] <- sum(log((g %*% f)))
+}
+
+g0 <- dbinom(0,matrix(z, nrow = 1, ncol = threshold, byrow = TRUE),prob = rho)
+sum(y_trueobs[y_true==1]==0)/sum(y_true==1)
+sum(y_trueobs[y_true==2]==0)/sum(y_true==2)
+
+# with obsered, including 0
+# likelihood of observing y given z,rho
+z <- matrix(seq(0,threshold), nrow = threshold+1, ncol = 1)
+Y <- matrix(y_trueobs,nrow = length(y_trueobs), ncol = threshold+1, byrow = FALSE)
+g <- dbinom(Y,matrix(z, nrow = nrow(Y), ncol = threshold+1, byrow = TRUE),prob = rho)
+# likelihood of oberving 0 given z, rho
+g0 <- dbinom(0,matrix(z, nrow = 1, ncol = threshold+1, byrow = TRUE),prob = rho)
+
+Rs <- seq(0.6,0.95,by=.01)
+Li <-  rep(NA,length(Rs))
+for(i in 1:length(Rs)){
+  f <- f_z_NB(z = z, s = 1, R = Rs[i], over = over) #*R_eff$P_extinction #all R_eff are 
+  Li[i]<-sum(log((g %*% f)))
+}
+
+
+
+
+# with obsered, excluding 0
+# likelihood of observing y given z,rho
+z <- matrix(seq(1,threshold), nrow = threshold, ncol = 1)
+
+Y <- matrix(y_obs,nrow = length(y_obs), ncol = threshold, byrow = FALSE)
+g <- dbinom(Y,matrix(z, nrow = nrow(Y), ncol = threshold, byrow = TRUE),prob = rho)
+# likelihood of oberving 0 given z, rho
+g0 <- dbinom(0,matrix(z, nrow = 1, ncol = threshold, byrow = TRUE),prob = rho)
+
+Rs <- seq(0.6,0.95,by=.01)
+L <- L2 <- rep(NA,length(Rs))
+for(i in 1:length(Rs)){
+  f <- f_z_NB(z = z, s = 1, R = Rs[i], over = over) #*R_eff$P_extinction #all R_eff are 
+  L[i]<-sum(log((g %*% f)))
+  L2[i]<-sum(log((g %*% f))) - nrow(g)*log(1-g0 %*% f)
+}
+
+```
+
+```{r}
+
+plot(Rs,L0-max(L0))
+theta_max_likelihood(theta = Rs, likelihood = L0)
+
+lines(Rs,L-max(L))
+theta_max_likelihood(theta = Rs, likelihood = L)
+lines(Rs,Li-max(Li),type='p',pch=16,col='green4')
+theta_max_likelihood(theta = Rs, likelihood = Li)
+lines(Rs,L2-max(L2),col='red')
+theta_max_likelihood(theta = Rs, likelihood = L2)
+
+```
+
+
+```{r}
+f_z_NB2 <- function(z,s,R,over){
+  z <- z+1
+  logf<-lgamma(z*over+z-1)-lgamma(z*over)-lgamma(z+1) + (z-1)*log(R/over) - (z*over+z-1)*log(R/over+1)
+  f<-exp(logf)
+
+  # logf<-(z-s-1)*log( s*z)+(z-s)*log(R)+ (-z*R) - lgamma(z-s +1)
+  # f<-exp(logf)
+
+  # plot(Re(Psize))
+  # sum(Psize,na.rm=TRUE)
+
+  return(proba_z=f)
+
+}
 
 ```
