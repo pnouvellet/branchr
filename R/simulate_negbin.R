@@ -62,8 +62,8 @@ simulate_negbin <- function(R,n,s,rho,t_max,over) {
 	if ((length(t_max)!=1 | t_max==0 | t_max!=round(t_max))[1]) warning('t_max must be a positive integer')
 
 	# declare incidence matrices
-  N <- matrix(NA, nrow = n, ncol = t_max)
-  N_obs_full <- matrix(NA, nrow = n, ncol = t_max)
+  N <- matrix(0, nrow = n, ncol = t_max)
+  N_obs_full <- matrix(0, nrow = n, ncol = t_max)
 
 	# initial values
   N[,1] <- s
@@ -72,8 +72,9 @@ simulate_negbin <- function(R,n,s,rho,t_max,over) {
 	# simulate the Poisson branching process and reporting
   for (i in 2:t_max){
     # N[,i] <- rpois(n,R*N[,i-1])
-    N[,i] <- rnbinom(n,mu = R*N[,i-1],size = over)
-    N_obs_full[,i] <- rbinom(n,N[,i],rho)
+    f <- which(N[,i-1] > 0)
+    N[f,i] <- rnbinom(length(f),mu = R*N[f,i-1],size = N[f,i-1]*over)
+    N_obs_full[f,i] <- rbinom(length(f),N[f,i],rho)
   }
 	# check all simulated outbreaks are extinct
   n_ongoing <- n - sum(N[,t_max]==0)
