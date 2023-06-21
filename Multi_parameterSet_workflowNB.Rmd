@@ -170,7 +170,9 @@ param.grid = aa$param.grid
 
 ## plot
 
-```{r}
+```{r,  fig.height=4, fig.width= 4}
+
+layout(matrix(c(1,3,2),nrow = 3,ncol = 1))
 
 par(oma=c(3,3,0,0))
 # plot R's
@@ -185,9 +187,12 @@ Hmisc::errbar(x = rep(1:(n_param_set/n_over), n_over)+
               col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
               errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
 
+# axis(1, at = 1:(n_param_set/n_over), 
+#      labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
+#                      '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+#      las=2, cex.axis = 0.8)
 axis(1, at = 1:(n_param_set/n_over), 
-     labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
-                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+     labels = FALSE, 
      las=2, cex.axis = 0.8)
 
 lines(1:(n_param_set/n_over), param.grid$R[1:(n_param_set/n_over)],
@@ -245,9 +250,12 @@ Hmisc::errbar(rep(1:(n_param_set/n_over), n_over)+
               col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
               errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
 
+# axis(1, at = 1:(n_param_set/n_over), 
+#      labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
+#                      '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+#      las=2, cex.axis = 0.8)
 axis(1, at = 1:(n_param_set/n_over), 
-     labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
-                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+     labels = FALSE, 
      las=2, cex.axis = 0.8)
 abline(h = 0, lty = 2, col = 'red3')
 
@@ -256,7 +264,9 @@ legend('bottomright',
        col = c('blue3','green4','orange3'), bty = 'n',pch = 16)
 ```
 
-```{r}
+```{r, fig.height=4, fig.width= 4}
+
+layout(matrix(c(1,3,2),nrow = 3,ncol = 1))
 
 #plot importations
 Hmisc::errbar(x = rep(1:(n_param_set/n_over), n_over)+
@@ -269,9 +279,12 @@ Hmisc::errbar(x = rep(1:(n_param_set/n_over), n_over)+
               col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
               errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
 
-axis(1, at = 1:(n_param_set/n_over),
-     labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
-                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+# axis(1, at = 1:(n_param_set/n_over),
+#      labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
+#                      '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+#      las=1, cex.axis = 0.8)
+axis(1, at = 1:(n_param_set/n_over), 
+     labels = FALSE, 
      las=2, cex.axis = 0.8)
 lines(1:(n_param_set/2), param.grid$n[1:(n_param_set/2)],
       pch = 16, type = 'p', col = 'red3')
@@ -293,9 +306,9 @@ Hmisc::errbar(rep(1:(n_param_set/n_over), n_over)+
               col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
               errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
 
-axis(1, at = 1:(n_param_set/n_over), 
+axis(1, at = 1:(n_param_set/n_over),
      labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
-                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+                     '; n=',param.grid$n)[1:(n_param_set/n_over)],
      las=2, cex.axis = 0.8)
 abline(h = 0.95, lty = 2, col = 'red3')
 
@@ -316,9 +329,12 @@ Hmisc::errbar(rep(1:(n_param_set/n_over), n_over)+
               col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
               errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
 
+# axis(1, at = 1:(n_param_set/n_over), 
+#      labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
+#                      '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+#      las=2, cex.axis = 0.8)
 axis(1, at = 1:(n_param_set/n_over), 
-     labels = paste0('R=',param.grid$R,'; rho=',param.grid$rho,
-                     '; n=',param.grid$n)[1:(n_param_set/n_over)], 
+     labels = FALSE, 
      las=2, cex.axis = 0.8)
 abline(h = 0, lty = 2, col = 'red3')
 
