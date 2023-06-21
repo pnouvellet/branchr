@@ -324,7 +324,7 @@ Hmisc::errbar(rep(1:(n_param_set/n_over), n_over)+
               yminus = param.grid$ImpbiasLow, 
               yplus = param.grid$ImpbiasHigh,
               bty = 'n',ylim = c(-1,1),
-              ylab = 'Bias in R',
+              ylab = 'Bias in importations',
               xaxt = "n", xlab = "",
               col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over),
               errbar.col = rep(c('blue3','green4','orange3'), each = n_param_set/n_over))
